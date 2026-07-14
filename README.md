@@ -1,4 +1,4 @@
-# NotePad++ Clone
+# NotePadJS Clone
 
 A comprehensive text editor clone inspired by NotePad++, built entirely with HTML, CSS, and JavaScript.
 
