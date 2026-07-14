@@ -1,0 +1,328 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #2d2d2d;
+    color: #ffffff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Menu Bar */
+.menu-bar {
+    background-color: #1e1e1e;
+    display: flex;
+    border-bottom: 1px solid #444;
+    height: 30px;
+}
+
+.menu {
+    position: relative;
+}
+
+.menu-button {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    padding: 0 12px;
+    height: 30px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.menu-button:hover {
+    background-color: #3d3d3d;
+}
+
+.menu-dropdown {
+    position: absolute;
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    display: none;
+    z-index: 1000;
+    min-width: 180px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.menu-dropdown.show {
+    display: block;
+}
+
+.menu-item {
+    padding: 6px 12px;
+    color: #ffffff;
+    cursor: pointer;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+}
+
+.menu-item:hover {
+    background-color: #3d3d3d;
+}
+
+.menu-divider {
+    height: 1px;
+    background-color: #444;
+    margin: 4px 0;
+}
+
+/* Toolbar */
+.toolbar {
+    background-color: #252526;
+    border-bottom: 1px solid #444;
+    padding: 4px;
+    display: flex;
+    gap: 4px;
+}
+
+.tool-button {
+    background-color: #2d2d2d;
+    border: 1px solid #444;
+    color: #ffffff;
+    padding: 4px 8px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+.tool-button:hover {
+    background-color: #3d3d3d;
+}
+
+/* Editor Container */
+.editor-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Line Numbers */
+.line-numbers {
+    background-color: #252526;
+    color: #858585;
+    padding: 8px 8px 8px 4px;
+    text-align: right;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden;
+    user-select: none;
+    width: 50px;
+    min-width: 50px;
+    border-right: 1px solid #444;
+}
+
+/* Editor */
+.editor {
+    flex: 1;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: none;
+    resize: none;
+    outline: none;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.editor:focus {
+    outline: none;
+}
+
+/* Scrollbar Styling */
+.editor::-webkit-scrollbar {
+    width: 12px;
+}
+
+.editor::-webkit-scrollbar-track {
+    background: #252526;
+}
+
+.editor::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 6px;
+}
+
+.editor::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Status Bar */
+.status-bar {
+    background-color: #1e1e1e;
+    border-top: 1px solid #444;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    color: #858585;
+}
+
+.status-left span,
+.status-right span {
+    margin-right: 20px;
+}
+
+.status-left span:last-child,
+.status-right span:last-child {
+    margin-right: 0;
+}
+
+/* Dialog Styles */
+.dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    min-width: 300px;
+}
+
+.dialog-title {
+    background-color: #252526;
+    padding: 8px 12px;
+    border-bottom: 1px solid #444;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.dialog-content {
+    padding: 12px;
+}
+
+.dialog-input {
+    width: 100%;
+    padding: 6px;
+    margin-bottom: 8px;
+    background-color: #2d2d2d;
+    border: 1px solid #444;
+    color: #ffffff;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.dialog-buttons button {
+    padding: 6px 12px;
+    background-color: #2d2d2d;
+    border: 1px solid #444;
+    color: #ffffff;
+    cursor: pointer;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+}
+
+.dialog-buttons button:hover {
+    background-color: #3d3d3d;
+}
+
+.dialog-options {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+}
+
+.dialog-options label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    color: #858585;
+    cursor: pointer;
+}
+
+.dialog-options input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Syntax Highlighting Classes */
+.keyword {
+    color: #569cd6;
+}
+
+.string {
+    color: #ce9178;
+}
+
+.comment {
+    color: #6a9955;
+}
+
+.number {
+    color: #b5cea8;
+}
+
+.function {
+    color: #dcdcaa;
+}
+
+.variable {
+    color: #9cdcfe;
+}
+
+/* Selection Highlighting */
+.editor::selection {
+    background-color: #004e8c;
+    color: #ffffff;
+}
+
+/* Current Line Highlight */
+.current-line {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Bracket Matching */
+.bracket-match {
+    background-color: rgba(100, 100, 255, 0.3);
+}
+
+/* Word Wrap Toggle */
+.word-wrap-on .editor {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.word-wrap-off .editor {
+    white-space: pre;
+    overflow-x: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .menu-bar {
+        display: none;
+    }
+    
+    .toolbar {
+        display: none;
+    }
+    
+    .line-numbers {
+        display: none;
+    }
+}

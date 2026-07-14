@@ -1,0 +1,222 @@
+/* Theme Support for NotePad++ Clone */
+
+/* Default Theme (Dark) */
+:root {
+    --bg-color: #1e1e1e;
+    --text-color: #ffffff;
+    --line-numbers-bg: #252526;
+    --line-numbers-color: #858585;
+    --menu-bg: #1e1e1e;
+    --menu-text: #ffffff;
+    --status-bar-bg: #1e1e1e;
+    --status-bar-text: #858585;
+    --toolbar-bg: #252526;
+    --button-bg: #2d2d2d;
+    --button-border: #444;
+    --scrollbar-track: #252526;
+    --scrollbar-thumb: #555;
+    --selection-bg: #004e8c;
+    --selection-text: #ffffff;
+    --current-line-bg: rgba(255, 255, 255, 0.1);
+    --bracket-match-bg: rgba(100, 100, 255, 0.3);
+}
+
+/* Light Theme */
+.light-theme {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --line-numbers-bg: #f5f5f5;
+    --line-numbers-color: #888888;
+    --menu-bg: #f0f0f0;
+    --menu-text: #000000;
+    --status-bar-bg: #f0f0f0;
+    --status-bar-text: #666666;
+    --toolbar-bg: #e8e8e8;
+    --button-bg: #d8d8d8;
+    --button-border: #999;
+    --scrollbar-track: #f0f0f0;
+    --scrollbar-thumb: #999;
+    --selection-bg: #0078d7;
+    --selection-text: #ffffff;
+    --current-line-bg: rgba(0, 0, 0, 0.05);
+    --bracket-match-bg: rgba(100, 100, 255, 0.2);
+}
+
+/* Apply theme variables */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.line-numbers {
+    background-color: var(--line-numbers-bg);
+    color: var(--line-numbers-color);
+}
+
+.editor {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.menu-bar {
+    background-color: var(--menu-bg);
+}
+
+.menu-button {
+    color: var(--menu-text);
+}
+
+.menu-dropdown {
+    background-color: var(--menu-bg);
+    border-color: var(--button-border);
+}
+
+.menu-item {
+    color: var(--menu-text);
+}
+
+.toolbar {
+    background-color: var(--toolbar-bg);
+    border-color: var(--button-border);
+}
+
+.tool-button {
+    background-color: var(--button-bg);
+    border-color: var(--button-border);
+    color: var(--menu-text);
+}
+
+.status-bar {
+    background-color: var(--status-bar-bg);
+    color: var(--status-bar-text);
+}
+
+.editor::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+.editor::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+}
+
+.editor::selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
+}
+
+.current-line {
+    background-color: var(--current-line-bg);
+}
+
+.bracket-match {
+    background-color: var(--bracket-match-bg);
+}
+
+/* Syntax Highlighting for Light Theme */
+.light-theme .keyword {
+    color: #0000ff;
+}
+
+.light-theme .string {
+    color: #a31515;
+}
+
+.light-theme .comment {
+    color: #008000;
+}
+
+.light-theme .number {
+    color: #098658;
+}
+
+.light-theme .function {
+    color: #74531f;
+}
+
+.light-theme .variable {
+    color: #0000ff;
+}
+
+/* Additional Theme: Solarized Dark */
+.solarized-dark {
+    --bg-color: #002b36;
+    --text-color: #839496;
+    --line-numbers-bg: #073642;
+    --line-numbers-color: #586e75;
+    --menu-bg: #073642;
+    --menu-text: #839496;
+    --status-bar-bg: #073642;
+    --status-bar-text: #586e75;
+    --toolbar-bg: #073642;
+    --button-bg: #073642;
+    --button-border: #586e75;
+    --scrollbar-track: #073642;
+    --scrollbar-thumb: #586e75;
+    --selection-bg: #268bd2;
+    --selection-text: #002b36;
+    --current-line-bg: rgba(255, 255, 255, 0.05);
+    --bracket-match-bg: rgba(100, 100, 255, 0.2);
+}
+
+/* Additional Theme: Solarized Light */
+.solarized-light {
+    --bg-color: #fdf6e3;
+    --text-color: #657b83;
+    --line-numbers-bg: #eee8d5;
+    --line-numbers-color: #839496;
+    --menu-bg: #eee8d5;
+    --menu-text: #657b83;
+    --status-bar-bg: #eee8d5;
+    --status-bar-text: #839496;
+    --toolbar-bg: #eee8d5;
+    --button-bg: #eee8d5;
+    --button-border: #839496;
+    --scrollbar-track: #eee8d5;
+    --scrollbar-thumb: #839496;
+    --selection-bg: #268bd2;
+    --selection-text: #fdf6e3;
+    --current-line-bg: rgba(0, 0, 0, 0.05);
+    --bracket-match-bg: rgba(100, 100, 255, 0.2);
+}
+
+/* Additional Theme: Monokai */
+.monokai {
+    --bg-color: #272822;
+    --text-color: #f8f8f2;
+    --line-numbers-bg: #272822;
+    --line-numbers-color: #75715e;
+    --menu-bg: #272822;
+    --menu-text: #f8f8f2;
+    --status-bar-bg: #272822;
+    --status-bar-text: #75715e;
+    --toolbar-bg: #272822;
+    --button-bg: #3e3d32;
+    --button-border: #75715e;
+    --scrollbar-track: #272822;
+    --scrollbar-thumb: #75715e;
+    --selection-bg: #f92672;
+    --selection-text: #272822;
+    --current-line-bg: rgba(255, 255, 255, 0.1);
+    --bracket-match-bg: rgba(100, 100, 255, 0.3);
+}
+
+/* Additional Theme: Dracula */
+.dracula {
+    --bg-color: #282a36;
+    --text-color: #f8f8f2;
+    --line-numbers-bg: #282a36;
+    --line-numbers-color: #6272a4;
+    --menu-bg: #282a36;
+    --menu-text: #f8f8f2;
+    --status-bar-bg: #282a36;
+    --status-bar-text: #6272a4;
+    --toolbar-bg: #282a36;
+    --button-bg: #44475a;
+    --button-border: #6272a4;
+    --scrollbar-track: #282a36;
+    --scrollbar-thumb: #6272a4;
+    --selection-bg: #44475a;
+    --selection-text: #f8f8f2;
+    --current-line-bg: rgba(255, 255, 255, 0.05);
+    --bracket-match-bg: rgba(100, 100, 255, 0.2);
+}
