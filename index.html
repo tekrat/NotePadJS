@@ -83,6 +83,137 @@
         .theme-option.active {
             background-color: #0078d7;
         }
+        
+        /* Tab Bar Styles */
+        .tab-bar {
+            background-color: #252526;
+            border-bottom: 1px solid #444;
+            display: flex;
+            height: 30px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        
+        .tab {
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            border-bottom: none;
+            color: #cccccc;
+            padding: 6px 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            min-width: 100px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .tab:hover {
+            background-color: #3d3d3d;
+        }
+        
+        .tab.active {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border-bottom: 1px solid #1e1e1e;
+        }
+        
+        .tab-close {
+            margin-left: 8px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 0 4px;
+            font-size: 12px;
+        }
+        
+        .tab-close:hover {
+            color: #ffffff;
+            background-color: #ff5555;
+            border-radius: 2px;
+        }
+        
+        .tab-new {
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            border-left: none;
+            color: #cccccc;
+            padding: 6px 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .tab-new:hover {
+            background-color: #3d3d3d;
+        }
+        
+        .tab-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* Editor Container for tabs */
+        .editor-tabs-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .editor-tab {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .editor-tab.active {
+            display: flex;
+        }
+        
+        .editor-wrapper {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background-color: #1e1e1e;
+            border: 1px solid #444;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+            z-index: 3000;
+            display: none;
+        }
+        
+        .context-menu.show {
+            display: block;
+        }
+        
+        .context-menu-item {
+            padding: 6px 12px;
+            color: #ffffff;
+            cursor: pointer;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+        }
+        
+        .context-menu-item:hover {
+            background-color: #3d3d3d;
+        }
+        
+        .context-menu-divider {
+            height: 1px;
+            background-color: #444;
+            margin: 4px 0;
+        }
     </style>
 </head>
 <body>
@@ -95,6 +226,10 @@
                 <div class="menu-item" onclick="openFile()">Open...</div>
                 <div class="menu-item" onclick="saveFile()">Save</div>
                 <div class="menu-item" onclick="saveFileAs()">Save As...</div>
+                <div class="menu-item" onclick="saveAllFiles()">Save All</div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" onclick="closeCurrentTab()">Close</div>
+                <div class="menu-item" onclick="closeAllTabs()">Close All</div>
                 <div class="menu-divider"></div>
                 <div class="menu-item" onclick="printFile()">Print...</div>
                 <div class="menu-divider"></div>
@@ -158,37 +293,17 @@
         </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-        <button class="tool-button" onclick="newFile()" title="New">📄</button>
-        <button class="tool-button" onclick="openFile()" title="Open">📁</button>
-        <button class="tool-button" onclick="saveFile()" title="Save">💾</button>
-        <button class="tool-button" onclick="printFile()" title="Print">🖨️</button>
-        <button class="tool-button" onclick="cut()" title="Cut">✂️</button>
-        <button class="tool-button" onclick="copy()" title="Copy">📋</button>
-        <button class="tool-button" onclick="paste()" title="Paste">🖌️</button>
-        <button class="tool-button" onclick="undo()" title="Undo">↩️</button>
-        <button class="tool-button" onclick="redo()" title="Redo">↪️</button>
-        <button class="tool-button" onclick="findText()" title="Find">🔍</button>
-        <button class="tool-button" onclick="replaceText()" title="Replace">🔄</button>
+    <!-- Tab Bar -->
+    <div class="tab-bar" id="tab-bar">
+        <div class="tab-container" id="tab-container">
+            <!-- Tabs will be added dynamically -->
+        </div>
+        <button class="tab-new" onclick="newFile()" title="New Tab">+</button>
     </div>
 
-    <!-- Editor Area -->
-    <div class="editor-container">
-        <!-- Line Numbers -->
-        <div class="line-numbers" id="line-numbers"></div>
-        
-        <!-- Text Area -->
-        <textarea 
-            id="editor" 
-            class="editor" 
-            spellcheck="false"
-            oninput="handleInput()"
-            onscroll="syncScroll()"
-            onkeydown="handleKeyDown(event)"
-            onmouseup="updateSelectionInfo()"
-            onkeyup="updateSelectionInfo()"
-        ></textarea>
+    <!-- Editor Tabs Container -->
+    <div class="editor-tabs-container" id="editor-tabs-container">
+        <!-- Editor tabs will be added dynamically -->
     </div>
 
     <!-- Status Bar -->
@@ -261,12 +376,13 @@
     <div id="about-dialog" class="dialog" style="display: none;">
         <div class="dialog-title">About NotePad++ Clone</div>
         <div class="dialog-content">
-            <p><strong>NotePad++ Clone v1.0</strong></p>
+            <p><strong>NotePad++ Clone v2.0</strong></p>
             <p>A simple text editor inspired by NotePad++</p>
             <p>Built with HTML, CSS, and JavaScript</p>
             <p>Features:</p>
             <ul>
-                <li>File operations (New, Open, Save)</li>
+                <li>Multiple tabs for editing multiple files</li>
+                <li>File operations (New, Open, Save, Save All)</li>
                 <li>Edit operations (Undo, Redo, Cut, Copy, Paste)</li>
                 <li>Find and Replace with regex support</li>
                 <li>Syntax highlighting for multiple languages</li>
@@ -279,8 +395,18 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
+    <div id="tab-context-menu" class="context-menu">
+        <div class="context-menu-item" onclick="closeCurrentTab()">Close</div>
+        <div class="context-menu-item" onclick="closeOtherTabs()">Close Others</div>
+        <div class="context-menu-item" onclick="closeAllTabs()">Close All</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" onclick="saveFile()">Save</div>
+        <div class="context-menu-item" onclick="saveFileAs()">Save As...</div>
+    </div>
+
     <!-- File Open Dialog (Hidden) -->
-    <input type="file" id="file-input" style="display: none;" onchange="handleFileOpen(event)">
+    <input type="file" id="file-input" style="display: none;" onchange="handleFileOpen(event)" multiple>
     
     <!-- Save As Dialog (Hidden) -->
     <input type="file" id="save-input" style="display: none;" nwsaveas="save">

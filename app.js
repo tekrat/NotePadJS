@@ -1,39 +1,52 @@
-// NotePad++ Clone - Main Application JavaScript
+// NotePad++ Clone - Main Application JavaScript with Multiple Tabs
 
 // Global Variables
-let currentFile = null;
-let isModified = false;
-let undoStack = [];
-let redoStack = [];
+let tabs = []; // Array of tab objects
+let currentTabIndex = 0;
 let wordWrapEnabled = true;
 let statusBarVisible = true;
 let zoomLevel = 1;
-let findIndex = -1;
-let lastFindText = '';
-let currentLanguage = 'plain';
 let currentTheme = 'default';
 
+// Tab object structure
+function createTabObject() {
+    return {
+        id: generateId(),
+        filename: 'Untitled',
+        content: '',
+        isModified: false,
+        language: 'plain',
+        undoStack: [],
+        redoStack: [],
+        cursorPosition: 0,
+        scrollPosition: 0
+    };
+}
+
+// Generate unique ID
+function generateId() {
+    return 'tab-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
+
 // DOM Elements
-const editor = document.getElementById('editor');
-const lineNumbers = document.getElementById('line-numbers');
+const tabContainer = document.getElementById('tab-container');
+const editorTabsContainer = document.getElementById('editor-tabs-container');
 const statusBar = document.getElementById('status-bar');
 const lineCount = document.getElementById('line-count');
 const columnCount = document.getElementById('column-count');
 const charCount = document.getElementById('char-count');
 const fileInfo = document.getElementById('file-info');
 const languageInfo = document.getElementById('language');
+const tabContextMenu = document.getElementById('tab-context-menu');
 
 // Initialize the application
 function init() {
-    updateLineNumbers();
-    updateStatusBar();
+    // Create first tab
+    newFile();
     
-    // Set up event listeners
-    editor.addEventListener('scroll', syncScroll);
-    editor.addEventListener('input', handleInput);
-    editor.addEventListener('keydown', handleKeyDown);
-    editor.addEventListener('mouseup', updateSelectionInfo);
-    editor.addEventListener('keyup', updateSelectionInfo);
+    // Set up event listeners for the tab bar
+    tabContainer.addEventListener('click', handleTabClick);
+    tabContainer.addEventListener('contextmenu', showTabContextMenu);
     
     // Close menus when clicking elsewhere
     document.addEventListener('click', function(e) {
@@ -41,33 +54,281 @@ function init() {
             !e.target.classList.contains('menu-item')) {
             hideAllMenus();
         }
+        
+        // Hide context menu when clicking elsewhere
+        if (!e.target.closest('#tab-context-menu') && 
+            !e.target.classList.contains('tab')) {
+            hideContextMenu();
+        }
     });
     
     // Load from localStorage if available
-    const savedContent = localStorage.getItem('notepad-content');
-    const savedFile = localStorage.getItem('notepad-file');
+    const savedTabs = localStorage.getItem('notepad-tabs');
     const savedTheme = localStorage.getItem('notepad-theme');
-    const savedLanguage = localStorage.getItem('notepad-language');
     
-    if (savedContent) {
-        editor.value = savedContent;
-    }
-    
-    if (savedFile) {
-        currentFile = savedFile;
-        fileInfo.textContent = savedFile;
+    if (savedTabs) {
+        try {
+            const tabsData = JSON.parse(savedTabs);
+            tabsData.forEach((tabData, index) => {
+                if (index === 0) return; // Skip first tab (already created)
+                addNewTab(tabData);
+            });
+        } catch (e) {
+            console.error('Error loading tabs:', e);
+        }
     }
     
     if (savedTheme) {
         setTheme(savedTheme);
     }
     
-    if (savedLanguage) {
-        setLanguage(savedLanguage);
+    updateStatusBar();
+}
+
+// Tab Management Functions
+function addNewTab(tabData = null) {
+    const tabObj = tabData || createTabObject();
+    
+    // Add to tabs array
+    tabs.push(tabObj);
+    
+    // Create tab element
+    const tabElement = document.createElement('div');
+    tabElement.className = 'tab';
+    tabElement.dataset.id = tabObj.id;
+    tabElement.innerHTML = `
+        <span class="tab-title">${escapeHtml(tabObj.filename)}</span>
+        <button class="tab-close" onclick="closeTab('${tabObj.id}')">×</button>
+    `;
+    
+    // Add to tab container
+    tabContainer.insertBefore(tabElement, tabContainer.lastChild);
+    
+    // Create editor tab
+    const editorTab = document.createElement('div');
+    editorTab.className = 'editor-tab';
+    editorTab.dataset.id = tabObj.id;
+    
+    // Create line numbers
+    const lineNumbers = document.createElement('div');
+    lineNumbers.className = 'line-numbers';
+    lineNumbers.id = `line-numbers-${tabObj.id}`;
+    
+    // Create editor
+    const editor = document.createElement('textarea');
+    editor.className = 'editor';
+    editor.id = `editor-${tabObj.id}`;
+    editor.spellcheck = false;
+    editor.value = tabObj.content || '';
+    editor.dataset.id = tabObj.id;
+    
+    // Set up editor event listeners
+    editor.addEventListener('input', () => handleInput(tabObj.id));
+    editor.addEventListener('scroll', () => syncScroll(tabObj.id));
+    editor.addEventListener('keydown', (e) => handleKeyDown(e, tabObj.id));
+    editor.addEventListener('mouseup', () => updateSelectionInfo(tabObj.id));
+    editor.addEventListener('keyup', () => updateSelectionInfo(tabObj.id));
+    
+    // Create editor wrapper
+    const editorWrapper = document.createElement('div');
+    editorWrapper.className = 'editor-wrapper';
+    editorWrapper.appendChild(lineNumbers);
+    editorWrapper.appendChild(editor);
+    
+    editorTab.appendChild(editorWrapper);
+    editorTabsContainer.appendChild(editorTab);
+    
+    // Switch to new tab
+    switchToTab(tabObj.id);
+    
+    // Update line numbers
+    updateLineNumbers(tabObj.id);
+    
+    // Restore cursor and scroll position if available
+    if (tabObj.cursorPosition) {
+        editor.selectionStart = tabObj.cursorPosition;
+        editor.selectionEnd = tabObj.cursorPosition;
+    }
+    if (tabObj.scrollPosition) {
+        editor.scrollTop = tabObj.scrollPosition;
     }
     
-    updateLineNumbers();
+    return tabObj.id;
+}
+
+function closeTab(tabId) {
+    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
+    if (tabIndex === -1) return;
+    
+    // Check if tab is modified
+    if (tabs[tabIndex].isModified) {
+        const confirmClose = confirm(`You have unsaved changes in ${tabs[tabIndex].filename}. Close anyway?`);
+        if (!confirmClose) return;
+    }
+    
+    // Remove tab from array
+    tabs.splice(tabIndex, 1);
+    
+    // Remove tab element
+    const tabElement = document.querySelector(`.tab[data-id="${tabId}"]`);
+    if (tabElement) {
+        tabElement.remove();
+    }
+    
+    // Remove editor tab
+    const editorTab = document.querySelector(`.editor-tab[data-id="${tabId}"]`);
+    if (editorTab) {
+        editorTab.remove();
+    }
+    
+    // Switch to previous tab or first tab
+    if (currentTabIndex >= tabs.length) {
+        currentTabIndex = Math.max(0, tabs.length - 1);
+    }
+    
+    if (tabs.length > 0) {
+        switchToTab(tabs[currentTabIndex].id);
+    } else {
+        // No tabs left, create a new one
+        newFile();
+    }
+    
+    saveTabsToLocalStorage();
+}
+
+function closeCurrentTab() {
+    if (tabs.length <= 1) {
+        // Don't close the last tab
+        newFile();
+        return;
+    }
+    
+    const currentTab = tabs[currentTabIndex];
+    closeTab(currentTab.id);
+}
+
+function closeOtherTabs() {
+    const currentTab = tabs[currentTabIndex];
+    const tabsToClose = tabs.filter(tab => tab.id !== currentTab.id);
+    
+    // Close all other tabs
+    tabsToClose.forEach(tab => {
+        const tabElement = document.querySelector(`.tab[data-id="${tab.id}"]`);
+        if (tabElement) {
+            tabElement.remove();
+        }
+        
+        const editorTab = document.querySelector(`.editor-tab[data-id="${tab.id}"]`);
+        if (editorTab) {
+            editorTab.remove();
+        }
+    });
+    
+    // Keep only current tab
+    tabs = [currentTab];
+    currentTabIndex = 0;
+    
+    // Update tab elements
+    const tabElements = document.querySelectorAll('.tab');
+    tabElements.forEach(tab => {
+        if (tab.dataset.id !== currentTab.id) {
+            tab.remove();
+        }
+    });
+    
+    // Update editor tabs
+    const editorTabs = document.querySelectorAll('.editor-tab');
+    editorTabs.forEach(tab => {
+        if (tab.dataset.id !== currentTab.id) {
+            tab.remove();
+        }
+    });
+    
+    switchToTab(currentTab.id);
+    saveTabsToLocalStorage();
+}
+
+function closeAllTabs() {
+    if (tabs.length === 0) return;
+    
+    // Check for unsaved changes
+    const hasUnsaved = tabs.some(tab => tab.isModified);
+    if (hasUnsaved) {
+        const confirmClose = confirm('You have unsaved changes. Close all tabs anyway?');
+        if (!confirmClose) return;
+    }
+    
+    // Remove all tabs
+    tabs = [];
+    tabContainer.innerHTML = '';
+    editorTabsContainer.innerHTML = '';
+    
+    // Create a new tab
+    newFile();
+    saveTabsToLocalStorage();
+}
+
+function switchToTab(tabId) {
+    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
+    if (tabIndex === -1) return;
+    
+    // Update current tab index
+    currentTabIndex = tabIndex;
+    
+    // Update tab appearance
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`.tab[data-id="${tabId}"]`).classList.add('active');
+    
+    // Update editor tabs
+    document.querySelectorAll('.editor-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`.editor-tab[data-id="${tabId}"]`).classList.add('active');
+    
+    // Update status bar
     updateStatusBar();
+    
+    // Save current scroll and cursor position
+    const currentTab = tabs[currentTabIndex];
+    const editor = document.getElementById(`editor-${tabId}`);
+    if (editor) {
+        currentTab.cursorPosition = editor.selectionStart;
+        currentTab.scrollPosition = editor.scrollTop;
+    }
+    
+    saveTabsToLocalStorage();
+}
+
+function handleTabClick(e) {
+    if (e.target.classList.contains('tab-close')) {
+        return; // Let the close button handle it
+    }
+    
+    const tab = e.target.closest('.tab');
+    if (tab) {
+        switchToTab(tab.dataset.id);
+    }
+}
+
+function showTabContextMenu(e) {
+    e.preventDefault();
+    
+    const tab = e.target.closest('.tab');
+    if (tab) {
+        // Store which tab was right-clicked
+        tabContextMenu.dataset.tabId = tab.dataset.id;
+        
+        // Position context menu
+        tabContextMenu.style.left = e.clientX + 'px';
+        tabContextMenu.style.top = e.clientY + 'px';
+        tabContextMenu.classList.add('show');
+    }
+}
+
+function hideContextMenu() {
+    tabContextMenu.classList.remove('show');
 }
 
 // Menu Functions
@@ -88,17 +349,7 @@ function hideAllMenus() {
 
 // File Operations
 function newFile() {
-    if (isModified) {
-        const confirmNew = confirm('You have unsaved changes. Create new file anyway?');
-        if (!confirmNew) return;
-    }
-    
-    editor.value = '';
-    currentFile = null;
-    isModified = false;
-    fileInfo.textContent = 'Untitled';
-    updateLineNumbers();
-    updateStatusBar();
+    addNewTab();
     hideAllMenus();
 }
 
@@ -108,68 +359,114 @@ function openFile() {
 }
 
 function handleFileOpen(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
     
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        editor.value = e.target.result;
-        currentFile = file.name;
-        isModified = false;
-        fileInfo.textContent = file.name;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
         
-        // Detect language from file extension
-        const detectedLanguage = detectLanguage(file.name);
-        if (detectedLanguage) {
-            setLanguage(detectedLanguage);
-        }
+        reader.onload = function(e) {
+            const content = e.target.result;
+            
+            // Create new tab for this file
+            const tabId = addNewTab({
+                filename: file.name,
+                content: content,
+                isModified: false
+            });
+            
+            // Detect language from file extension
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab) {
+                const detectedLanguage = detectLanguage(file.name);
+                if (detectedLanguage) {
+                    tab.language = detectedLanguage;
+                }
+            }
+            
+            updateStatusBar();
+        };
         
-        updateLineNumbers();
-        updateStatusBar();
-        
-        // Save to localStorage
-        localStorage.setItem('notepad-content', editor.value);
-        localStorage.setItem('notepad-file', file.name);
-    };
-    reader.readAsText(file);
+        reader.readAsText(file);
+    }
     
     // Reset file input
     event.target.value = '';
 }
 
 function saveFile() {
-    if (!currentFile) {
-        saveFileAs();
-        return;
-    }
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
+    // Update tab content
+    currentTab.content = editor.value;
     
     // In a real browser environment, we'd use the File System Access API
     // For this demo, we'll save to localStorage
-    localStorage.setItem('notepad-content', editor.value);
-    localStorage.setItem('notepad-file', currentFile);
-    localStorage.setItem('notepad-theme', currentTheme);
-    localStorage.setItem('notepad-language', currentLanguage);
-    isModified = false;
+    saveTabsToLocalStorage();
+    currentTab.isModified = false;
     updateStatusBar();
     hideAllMenus();
     
     // Show saved notification
-    showNotification('File saved: ' + currentFile);
+    showNotification(`File saved: ${currentTab.filename}`);
 }
 
 function saveFileAs() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     // In a real implementation, this would trigger a save dialog
     // For this demo, we'll prompt for a filename
-    const fileName = prompt('Save file as:', currentFile || 'untitled.txt');
+    const fileName = prompt('Save file as:', currentTab.filename);
     if (!fileName) return;
     
-    currentFile = fileName;
-    fileInfo.textContent = fileName;
-    saveFile();
+    currentTab.filename = fileName;
+    currentTab.content = editor.value;
+    currentTab.isModified = false;
+    
+    // Update tab title
+    const tabElement = document.querySelector(`.tab[data-id="${currentTab.id}"] .tab-title`);
+    if (tabElement) {
+        tabElement.textContent = escapeHtml(fileName);
+    }
+    
+    saveTabsToLocalStorage();
+    updateStatusBar();
     hideAllMenus();
 }
 
+function saveAllFiles() {
+    // Save all modified tabs
+    tabs.forEach(tab => {
+        const editor = document.getElementById(`editor-${tab.id}`);
+        if (editor) {
+            tab.content = editor.value;
+            tab.isModified = false;
+        }
+    });
+    
+    saveTabsToLocalStorage();
+    updateStatusBar();
+    hideAllMenus();
+    
+    showNotification(`All ${tabs.length} files saved`);
+}
+
 function printFile() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     // Print the current content
     const printWindow = window.open('', '_blank');
     printWindow.document.write('<html><head><title>Print</title></head><body>');
@@ -181,60 +478,84 @@ function printFile() {
 }
 
 function exitApp() {
-    if (isModified) {
+    // Check for unsaved changes
+    const hasUnsaved = tabs.some(tab => tab.isModified);
+    if (hasUnsaved) {
         const confirmExit = confirm('You have unsaved changes. Exit anyway?');
         if (!confirmExit) return;
     }
     
     // Save state before closing
-    localStorage.setItem('notepad-content', editor.value);
-    localStorage.setItem('notepad-file', currentFile || '');
+    saveTabsToLocalStorage();
     localStorage.setItem('notepad-theme', currentTheme);
-    localStorage.setItem('notepad-language', currentLanguage);
     
     // In a real app, this would close the window
-    // For this demo, we'll just clear the editor
     window.close();
 }
 
 // Edit Operations
 function undo() {
-    if (undoStack.length > 0) {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
+    if (currentTab.undoStack.length > 0) {
         const currentState = editor.value;
-        redoStack.push(currentState);
-        editor.value = undoStack.pop();
-        updateLineNumbers();
+        currentTab.redoStack.push(currentState);
+        editor.value = currentTab.undoStack.pop();
+        updateLineNumbers(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
 }
 
 function redo() {
-    if (redoStack.length > 0) {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
+    if (currentTab.redoStack.length > 0) {
         const currentState = editor.value;
-        undoStack.push(currentState);
-        editor.value = redoStack.pop();
-        updateLineNumbers();
+        currentTab.undoStack.push(currentState);
+        editor.value = currentTab.redoStack.pop();
+        updateLineNumbers(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
 }
 
 function cut() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const selection = editor.value.substring(editor.selectionStart, editor.selectionEnd);
     if (selection) {
         navigator.clipboard.writeText(selection);
         const newText = editor.value.substring(0, editor.selectionStart) + 
                        editor.value.substring(editor.selectionEnd);
-        saveToUndoStack(editor.value);
+        currentTab.undoStack.push(editor.value);
         editor.value = newText;
-        updateLineNumbers();
+        currentTab.isModified = true;
+        updateLineNumbers(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
 }
 
 function copy() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const selection = editor.value.substring(editor.selectionStart, editor.selectionEnd);
     if (selection) {
         navigator.clipboard.writeText(selection);
@@ -243,15 +564,22 @@ function copy() {
 }
 
 function paste() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     navigator.clipboard.readText().then(text => {
         if (text) {
-            saveToUndoStack(editor.value);
+            currentTab.undoStack.push(editor.value);
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
             editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
             editor.selectionStart = start + text.length;
             editor.selectionEnd = start + text.length;
-            updateLineNumbers();
+            currentTab.isModified = true;
+            updateLineNumbers(currentTab.id);
             updateStatusBar();
         }
     });
@@ -259,22 +587,35 @@ function paste() {
 }
 
 function deleteText() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
     if (start !== end) {
-        saveToUndoStack(editor.value);
+        currentTab.undoStack.push(editor.value);
         editor.value = editor.value.substring(0, start) + editor.value.substring(end);
         editor.selectionStart = start;
         editor.selectionEnd = start;
-        updateLineNumbers();
+        currentTab.isModified = true;
+        updateLineNumbers(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
 }
 
 function selectAll() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     editor.select();
-    updateSelectionInfo();
+    updateSelectionInfo(currentTab.id);
     hideAllMenus();
 }
 
@@ -287,34 +628,65 @@ function toggleStatusBar() {
 
 function toggleWordWrap() {
     wordWrapEnabled = !wordWrapEnabled;
-    editor.style.whiteSpace = wordWrapEnabled ? 'pre-wrap' : 'pre';
-    editor.style.wordWrap = wordWrapEnabled ? 'break-word' : 'normal';
-    editor.style.overflowX = wordWrapEnabled ? 'hidden' : 'auto';
-    updateLineNumbers();
+    document.querySelectorAll('.editor').forEach(editor => {
+        editor.style.whiteSpace = wordWrapEnabled ? 'pre-wrap' : 'pre';
+        editor.style.wordWrap = wordWrapEnabled ? 'break-word' : 'normal';
+        editor.style.overflowX = wordWrapEnabled ? 'hidden' : 'auto';
+    });
+    
+    // Update line numbers for all tabs
+    tabs.forEach(tab => {
+        updateLineNumbers(tab.id);
+    });
+    
     hideAllMenus();
 }
 
 function zoomIn() {
     zoomLevel = Math.min(zoomLevel + 0.1, 3);
-    editor.style.fontSize = (14 * zoomLevel) + 'px';
-    lineNumbers.style.fontSize = (14 * zoomLevel) + 'px';
-    updateLineNumbers();
+    document.querySelectorAll('.editor').forEach(editor => {
+        editor.style.fontSize = (14 * zoomLevel) + 'px';
+    });
+    document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
+        lineNumbers.style.fontSize = (14 * zoomLevel) + 'px';
+    });
+    
+    tabs.forEach(tab => {
+        updateLineNumbers(tab.id);
+    });
+    
     hideAllMenus();
 }
 
 function zoomOut() {
     zoomLevel = Math.max(zoomLevel - 0.1, 0.5);
-    editor.style.fontSize = (14 * zoomLevel) + 'px';
-    lineNumbers.style.fontSize = (14 * zoomLevel) + 'px';
-    updateLineNumbers();
+    document.querySelectorAll('.editor').forEach(editor => {
+        editor.style.fontSize = (14 * zoomLevel) + 'px';
+    });
+    document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
+        lineNumbers.style.fontSize = (14 * zoomLevel) + 'px';
+    });
+    
+    tabs.forEach(tab => {
+        updateLineNumbers(tab.id);
+    });
+    
     hideAllMenus();
 }
 
 function resetZoom() {
     zoomLevel = 1;
-    editor.style.fontSize = '14px';
-    lineNumbers.style.fontSize = '14px';
-    updateLineNumbers();
+    document.querySelectorAll('.editor').forEach(editor => {
+        editor.style.fontSize = '14px';
+    });
+    document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
+        lineNumbers.style.fontSize = '14px';
+    });
+    
+    tabs.forEach(tab => {
+        updateLineNumbers(tab.id);
+    });
+    
     hideAllMenus();
 }
 
@@ -354,7 +726,10 @@ function setTheme(theme) {
 
 // Language Operations
 function setLanguage(language) {
-    currentLanguage = language;
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    currentTab.language = language;
     
     // Update language display
     const languageNames = {
@@ -368,20 +743,21 @@ function setLanguage(language) {
     };
     
     languageInfo.textContent = languageNames[language] || language;
-    localStorage.setItem('notepad-language', language);
+    saveTabsToLocalStorage();
     hideAllMenus();
-    
-    // In a real implementation, we would apply syntax highlighting here
-    // For now, we'll just store the language preference
 }
 
 // Format Operations
 function setFont() {
     // In a real implementation, this would show a font dialog
-    const font = prompt('Enter font family:', editor.style.fontFamily || 'Consolas');
+    const font = prompt('Enter font family:', 'Consolas');
     if (font) {
-        editor.style.fontFamily = font;
-        lineNumbers.style.fontFamily = font;
+        document.querySelectorAll('.editor').forEach(editor => {
+            editor.style.fontFamily = font;
+        });
+        document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
+            lineNumbers.style.fontFamily = font;
+        });
     }
     hideAllMenus();
 }
@@ -394,6 +770,12 @@ function findText() {
 }
 
 function findNext() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const findText = document.getElementById('find-text').value;
     const caseSensitive = document.getElementById('find-case-sensitive').checked;
     const wholeWord = document.getElementById('find-whole-word').checked;
@@ -457,14 +839,18 @@ function findNext() {
         editor.selectionEnd = foundIndex + findText.length;
         editor.focus();
         editor.scrollTop = (foundIndex / text.length) * editor.scrollHeight;
-        findIndex = foundIndex;
-        lastFindText = findText;
     } else {
         alert('Text not found: ' + findText);
     }
 }
 
 function findPrevious() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const findText = document.getElementById('find-text').value;
     const caseSensitive = document.getElementById('find-case-sensitive').checked;
     const wholeWord = document.getElementById('find-whole-word').checked;
@@ -530,8 +916,6 @@ function findPrevious() {
         editor.selectionEnd = foundIndex + findText.length;
         editor.focus();
         editor.scrollTop = (foundIndex / text.length) * editor.scrollHeight;
-        findIndex = foundIndex;
-        lastFindText = findText;
     } else {
         alert('Text not found: ' + findText);
     }
@@ -548,6 +932,12 @@ function replaceText() {
 }
 
 function replaceNext() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const findText = document.getElementById('replace-find').value;
     const replaceWith = document.getElementById('replace-with').value;
     
@@ -572,18 +962,25 @@ function replaceNext() {
     if (editor.selectionStart !== originalSelectionStart || 
         editor.selectionEnd !== originalSelectionEnd) {
         
-        saveToUndoStack(editor.value);
+        currentTab.undoStack.push(editor.value);
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
         editor.value = editor.value.substring(0, start) + replaceWith + editor.value.substring(end);
         editor.selectionStart = start + replaceWith.length;
         editor.selectionEnd = start + replaceWith.length;
-        updateLineNumbers();
+        currentTab.isModified = true;
+        updateLineNumbers(currentTab.id);
         updateStatusBar();
     }
 }
 
 function replaceAll() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const findText = document.getElementById('replace-find').value;
     const replaceWith = document.getElementById('replace-with').value;
     const caseSensitive = document.getElementById('replace-case-sensitive').checked;
@@ -626,9 +1023,10 @@ function replaceAll() {
     }
     
     if (count > 0) {
-        saveToUndoStack(editor.value);
+        currentTab.undoStack.push(editor.value);
         editor.value = newText;
-        updateLineNumbers();
+        currentTab.isModified = true;
+        updateLineNumbers(currentTab.id);
         updateStatusBar();
         alert(`Replaced ${count} occurrences of "${findText}"`);
     } else {
@@ -651,7 +1049,13 @@ function closeAboutDialog() {
 }
 
 // Utility Functions
-function updateLineNumbers() {
+function updateLineNumbers(tabId) {
+    const editor = document.getElementById(`editor-${tabId}`);
+    if (!editor) return;
+    
+    const lineNumbers = document.getElementById(`line-numbers-${tabId}`);
+    if (!lineNumbers) return;
+    
     const lines = editor.value.split('\n');
     const lineCount = lines.length;
     
@@ -663,14 +1067,25 @@ function updateLineNumbers() {
     lineNumbers.textContent = lineNumbersHtml;
     
     // Sync scroll position
-    syncScroll();
+    syncScroll(tabId);
 }
 
-function syncScroll() {
-    lineNumbers.scrollTop = editor.scrollTop;
+function syncScroll(tabId) {
+    const editor = document.getElementById(`editor-${tabId}`);
+    const lineNumbers = document.getElementById(`line-numbers-${tabId}`);
+    
+    if (editor && lineNumbers) {
+        lineNumbers.scrollTop = editor.scrollTop;
+    }
 }
 
 function updateStatusBar() {
+    const currentTab = tabs[currentTabIndex];
+    if (!currentTab) return;
+    
+    const editor = document.getElementById(`editor-${currentTab.id}`);
+    if (!editor) return;
+    
     const text = editor.value;
     const lines = text.split('\n');
     const lineCount = lines.length;
@@ -696,25 +1111,28 @@ function updateStatusBar() {
     columnCount.textContent = `Column: ${currentColumn}`;
     charCount.textContent = `Characters: ${text.length}`;
     
-    // Mark as modified if content changed
-    if (text !== localStorage.getItem('notepad-content')) {
-        isModified = true;
-    } else {
-        isModified = false;
-    }
+    // Update language info
+    const languageNames = {
+        'plain': 'Plain Text',
+        'javascript': 'JavaScript',
+        'html': 'HTML',
+        'css': 'CSS',
+        'python': 'Python',
+        'java': 'Java',
+        'cpp': 'C++'
+    };
+    languageInfo.textContent = languageNames[currentTab.language] || currentTab.language;
     
     // Update file info
-    if (isModified) {
-        fileInfo.textContent = (currentFile || 'Untitled') + ' *';
-    } else {
-        fileInfo.textContent = currentFile || 'Untitled';
-    }
+    fileInfo.textContent = currentTab.filename + (currentTab.isModified ? ' *' : '');
 }
 
-function updateSelectionInfo() {
+function updateSelectionInfo(tabId) {
+    const editor = document.getElementById(`editor-${tabId}`);
+    if (!editor) return;
+    
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
-    const selectedText = editor.value.substring(start, end);
     
     // Update status bar with selection info
     if (start !== end) {
@@ -734,29 +1152,48 @@ function updateSelectionInfo() {
     }
 }
 
-function handleInput() {
+function handleInput(tabId) {
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    
+    const editor = document.getElementById(`editor-${tabId}`);
+    if (!editor) return;
+    
     // Save to undo stack
-    saveToUndoStack(editor.value);
+    if (tab.undoStack.length > 0 && tab.undoStack[tab.undoStack.length - 1] === editor.value) {
+        // Don't save if same as last state
+    } else {
+        saveToUndoStack(tab, editor.value);
+    }
     
     // Clear redo stack when new input
-    redoStack = [];
+    tab.redoStack = [];
     
-    updateLineNumbers();
+    // Mark as modified
+    tab.isModified = true;
+    
+    updateLineNumbers(tabId);
     updateStatusBar();
     
     // Save to localStorage
-    localStorage.setItem('notepad-content', editor.value);
+    saveTabsToLocalStorage();
 }
 
-function saveToUndoStack(state) {
+function saveToUndoStack(tab, state) {
     // Limit undo stack size
-    if (undoStack.length > 100) {
-        undoStack.shift();
+    if (tab.undoStack.length > 100) {
+        tab.undoStack.shift();
     }
-    undoStack.push(state);
+    tab.undoStack.push(state);
 }
 
-function handleKeyDown(event) {
+function handleKeyDown(event, tabId) {
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    
+    const editor = document.getElementById(`editor-${tabId}`);
+    if (!editor) return;
+    
     // Handle common keyboard shortcuts
     if (event.ctrlKey) {
         switch (event.key) {
@@ -808,21 +1245,39 @@ function handleKeyDown(event) {
                 event.preventDefault();
                 printFile();
                 break;
+            case 'Tab':
+                event.preventDefault();
+                // Switch to next tab
+                if (event.shiftKey) {
+                    // Previous tab
+                    const prevIndex = (currentTabIndex - 1 + tabs.length) % tabs.length;
+                    switchToTab(tabs[prevIndex].id);
+                } else {
+                    // Next tab
+                    const nextIndex = (currentTabIndex + 1) % tabs.length;
+                    switchToTab(tabs[nextIndex].id);
+                }
+                break;
+            case 'w':
+                event.preventDefault();
+                closeCurrentTab();
+                break;
         }
     }
     
-    // Handle tab key
-    if (event.key === 'Tab') {
+    // Handle tab key (when not using Ctrl+Tab)
+    if (event.key === 'Tab' && !event.ctrlKey) {
         event.preventDefault();
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
         const spaces = '    '; // 4 spaces for tab
         
-        saveToUndoStack(editor.value);
+        saveToUndoStack(tab, editor.value);
         editor.value = editor.value.substring(0, start) + spaces + editor.value.substring(end);
         editor.selectionStart = start + spaces.length;
         editor.selectionEnd = start + spaces.length;
-        updateLineNumbers();
+        tab.isModified = true;
+        updateLineNumbers(tabId);
         updateStatusBar();
     }
     
@@ -836,16 +1291,17 @@ function handleKeyDown(event) {
         // Insert newline and preserve indentation
         setTimeout(() => {
             const newStart = editor.selectionStart;
-            saveToUndoStack(editor.value);
+            saveToUndoStack(tab, editor.value);
             editor.value = editor.value.substring(0, newStart) + leadingSpaces + editor.value.substring(newStart);
             editor.selectionStart = newStart + leadingSpaces.length;
             editor.selectionEnd = newStart + leadingSpaces.length;
-            updateLineNumbers();
+            tab.isModified = true;
+            updateLineNumbers(tabId);
             updateStatusBar();
         }, 0);
     }
     
-    updateSelectionInfo();
+    updateSelectionInfo(tabId);
 }
 
 function showNotification(message) {
@@ -859,6 +1315,19 @@ function showNotification(message) {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+// Save all tabs to localStorage
+function saveTabsToLocalStorage() {
+    const tabsData = tabs.map(tab => ({
+        filename: tab.filename,
+        content: tab.content || document.getElementById(`editor-${tab.id}`)?.value || '',
+        isModified: tab.isModified,
+        language: tab.language
+    }));
+    
+    localStorage.setItem('notepad-tabs', JSON.stringify(tabsData));
+    localStorage.setItem('notepad-theme', currentTheme);
 }
 
 // Escape HTML special characters
@@ -875,10 +1344,5 @@ window.onload = init;
 
 // Save content before page unload
 window.onbeforeunload = function() {
-    if (isModified) {
-        localStorage.setItem('notepad-content', editor.value);
-        localStorage.setItem('notepad-file', currentFile || '');
-        localStorage.setItem('notepad-theme', currentTheme);
-        localStorage.setItem('notepad-language', currentLanguage);
-    }
+    saveTabsToLocalStorage();
 };

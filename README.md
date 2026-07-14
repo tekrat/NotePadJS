@@ -5,7 +5,8 @@ A comprehensive text editor clone inspired by NotePad++, built entirely with HTM
 ## Features
 
 ### Core Features
-- **File Operations**: New, Open, Save, Save As, Print, Exit
+- **Multiple Tabs**: Edit multiple files simultaneously with tab switching
+- **File Operations**: New, Open, Save, Save As, Save All, Print, Exit
 - **Edit Operations**: Undo, Redo, Cut, Copy, Paste, Delete, Select All
 - **Find & Replace**: Advanced search with regex support, case sensitivity, whole word matching
 - **View Options**: Toggle status bar, word wrap, zoom in/out, reset zoom
@@ -14,15 +15,17 @@ A comprehensive text editor clone inspired by NotePad++, built entirely with HTM
 
 ### User Interface
 - **Menu Bar**: Traditional menu system with dropdown menus
+- **Tab Bar**: Multiple tabs for editing different files
 - **Toolbar**: Quick access to common operations with icons
 - **Line Numbers**: Display line numbers with sync scrolling
 - **Status Bar**: Shows current line, column, character count, file info, encoding, and EOL type
 - **Dialogs**: Find, Replace, About, and Theme selector dialogs
+- **Context Menu**: Right-click on tabs for additional options
 
 ### Keyboard Shortcuts
-- `Ctrl+S`: Save
-- `Ctrl+O`: Open
-- `Ctrl+N`: New
+- `Ctrl+S`: Save current file
+- `Ctrl+O`: Open file(s)
+- `Ctrl+N`: New tab
 - `Ctrl+Z`: Undo
 - `Ctrl+Y`: Redo
 - `Ctrl+X`: Cut
@@ -32,13 +35,16 @@ A comprehensive text editor clone inspired by NotePad++, built entirely with HTM
 - `Ctrl+F`: Find
 - `Ctrl+H`: Replace
 - `Ctrl+P`: Print
+- `Ctrl+Tab`: Switch to next tab
+- `Ctrl+Shift+Tab`: Switch to previous tab
+- `Ctrl+W`: Close current tab
 
 ## Usage
 
 ### Local Usage
 1. Clone or download this repository
 2. Open `index.html` in a web browser
-3. Start editing!
+3. Start editing! Multiple tabs will be automatically saved to localStorage
 
 ### Web Server
 For best results, serve the files using a web server:
@@ -59,10 +65,10 @@ Then open `http://localhost:8000` in your browser.
 
 ```
 NotePadJS/
-├── index.html      # Main HTML file
+├── index.html      # Main HTML file with tab support
 ├── styles.css      # Main stylesheet
 ├── themes.css      # Theme definitions
-├── app.js          # Main application logic
+├── app.js          # Main application logic with tab management
 ├── syntax.js       # Syntax highlighting module
 └── README.md       # This file
 ```
@@ -75,6 +81,15 @@ NotePadJS/
 - Safari (limited clipboard functionality)
 
 ## Features in Detail
+
+### Multiple Tabs
+- **New Tab**: `Ctrl+N` or click the + button
+- **Switch Tabs**: Click on tab, `Ctrl+Tab` (next), `Ctrl+Shift+Tab` (previous)
+- **Close Tab**: Click the × button on the tab or `Ctrl+W`
+- **Close Others**: Right-click tab → Close Others
+- **Close All**: Right-click tab → Close All or File → Close All
+- **Save All**: File → Save All to save all modified tabs
+- **Drag & Drop**: Tabs can be reordered (future enhancement)
 
 ### Syntax Highlighting
 The editor supports syntax highlighting for multiple programming languages:
@@ -115,9 +130,10 @@ The status bar displays:
 - End-of-line type (Windows CR LF)
 
 ### Persistence
-- Content is automatically saved to localStorage
+- All tabs and their content are automatically saved to localStorage
 - Theme and language preferences are preserved
-- File name is remembered between sessions
+- File names are remembered between sessions
+- Cursor positions and scroll positions are saved per tab
 
 ## Customization
 
@@ -136,10 +152,11 @@ The status bar displays:
 - **File System Access**: Due to browser security restrictions, file operations are limited to localStorage. In a real application, you would need to use the File System Access API or run as a desktop application.
 - **Clipboard**: Some browsers may restrict clipboard access without user interaction.
 - **Printing**: Basic printing functionality is provided, but advanced print options are not available.
+- **Tab Reordering**: Currently not implemented (future enhancement).
 
 ## Future Enhancements
 
-- [ ] Multiple tabs for editing multiple files
+- [ ] Drag and drop tab reordering
 - [ ] Split view for comparing files
 - [ ] Code folding
 - [ ] Auto-completion
@@ -148,6 +165,8 @@ The status bar displays:
 - [ ] Settings dialog for customization
 - [ ] Session management
 - [ ] File browser sidebar
+- [ ] Recent files list
+- [ ] Tab groups
 
 ## License
 
