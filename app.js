@@ -1,4 +1,4 @@
-// NotePad++ Clone - Main Application JavaScript with Multiple Tabs
+// NotePad++ Clone - Main Application JavaScript with Multiple Tabs and Syntax Highlighting
 
 // Global Variables
 let tabs = []; // Array of tab objects
@@ -98,7 +98,7 @@ function addNewTab(tabData = null) {
     tabElement.dataset.id = tabObj.id;
     tabElement.innerHTML = `
         <span class="tab-title">${escapeHtml(tabObj.filename)}</span>
-        <button class="tab-close" onclick="closeTab('${tabObj.id}')">×</button>
+        <button class="tab-close" onclick="closeTab('${tabObj.id}')">\u00d7</button>
     `;
     
     // Add to tab container
@@ -114,13 +114,49 @@ function addNewTab(tabData = null) {
     lineNumbers.className = 'line-numbers';
     lineNumbers.id = `line-numbers-${tabObj.id}`;
     
-    // Create editor
+    // Create editor container for highlighting
+    const editorWrapper = document.createElement('div');
+    editorWrapper.className = 'editor-wrapper';
+    editorWrapper.style.position = 'relative';
+    editorWrapper.style.flex = '1';
+    editorWrapper.style.overflow = 'hidden';
+    
+    // Create the actual textarea editor
     const editor = document.createElement('textarea');
     editor.className = 'editor';
     editor.id = `editor-${tabObj.id}`;
     editor.spellcheck = false;
     editor.value = tabObj.content || '';
     editor.dataset.id = tabObj.id;
+    editor.style.position = 'absolute';
+    editor.style.top = '0';
+    editor.style.left = '0';
+    editor.style.width = '100%';
+    editor.style.height = '100%';
+    editor.style.backgroundColor = 'transparent';
+    editor.style.color = 'transparent';
+    editor.style.caretColor = '#ffffff';
+    editor.style.zIndex = '2';
+    
+    // Create highlighted display div
+    const highlightedDiv = document.createElement('pre');
+    highlightedDiv.className = 'editor-highlighted';
+    highlightedDiv.id = `highlighted-${tabObj.id}`;
+    highlightedDiv.style.position = 'absolute';
+    highlightedDiv.style.top = '0';
+    highlightedDiv.style.left = '0';
+    highlightedDiv.style.width = '100%';
+    highlightedDiv.style.height = '100%';
+    highlightedDiv.style.overflow = 'auto';
+    highlightedDiv.style.pointerEvents = 'none';
+    highlightedDiv.style.whiteSpace = 'pre-wrap';
+    highlightedDiv.style.wordWrap = 'break-word';
+    highlightedDiv.style.margin = '0';
+    highlightedDiv.style.padding = '8px';
+    highlightedDiv.style.fontFamily = 'Consolas, Courier New, monospace';
+    highlightedDiv.style.fontSize = '14px';
+    highlightedDiv.style.lineHeight = '1.5';
+    highlightedDiv.style.zIndex = '1';
     
     // Set up editor event listeners
     editor.addEventListener('input', () => handleInput(tabObj.id));
@@ -128,13 +164,13 @@ function addNewTab(tabData = null) {
     editor.addEventListener('keydown', (e) => handleKeyDown(e, tabObj.id));
     editor.addEventListener('mouseup', () => updateSelectionInfo(tabObj.id));
     editor.addEventListener('keyup', () => updateSelectionInfo(tabObj.id));
+    editor.addEventListener('focus', () => updateSyntaxHighlighting(tabObj.id));
     
-    // Create editor wrapper
-    const editorWrapper = document.createElement('div');
-    editorWrapper.className = 'editor-wrapper';
-    editorWrapper.appendChild(lineNumbers);
+    // Add elements to wrapper
+    editorWrapper.appendChild(highlightedDiv);
     editorWrapper.appendChild(editor);
     
+    editorTab.appendChild(lineNumbers);
     editorTab.appendChild(editorWrapper);
     editorTabsContainer.appendChild(editorTab);
     
@@ -143,6 +179,9 @@ function addNewTab(tabData = null) {
     
     // Update line numbers
     updateLineNumbers(tabObj.id);
+    
+    // Initial syntax highlighting
+    updateSyntaxHighlighting(tabObj.id);
     
     // Restore cursor and scroll position if available
     if (tabObj.cursorPosition) {
@@ -298,6 +337,9 @@ function switchToTab(tabId) {
         currentTab.scrollPosition = editor.scrollTop;
     }
     
+    // Update syntax highlighting for the new tab
+    updateSyntaxHighlighting(tabId);
+    
     saveTabsToLocalStorage();
 }
 
@@ -382,6 +424,18 @@ function handleFileOpen(event) {
                 const detectedLanguage = detectLanguage(file.name);
                 if (detectedLanguage) {
                     tab.language = detectedLanguage;
+                    // Update language display
+                    const languageNames = {
+                        'plain': 'Plain Text',
+                        'javascript': 'JavaScript',
+                        'html': 'HTML',
+                        'css': 'CSS',
+                        'python': 'Python',
+                        'java': 'Java',
+                        'cpp': 'C++',
+                        'markdown': 'Markdown'
+                    };
+                    languageInfo.textContent = languageNames[detectedLanguage] || detectedLanguage;
                 }
             }
             
@@ -506,6 +560,7 @@ function undo() {
         currentTab.redoStack.push(currentState);
         editor.value = currentTab.undoStack.pop();
         updateLineNumbers(currentTab.id);
+        updateSyntaxHighlighting(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
@@ -523,6 +578,7 @@ function redo() {
         currentTab.undoStack.push(currentState);
         editor.value = currentTab.redoStack.pop();
         updateLineNumbers(currentTab.id);
+        updateSyntaxHighlighting(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
@@ -544,6 +600,7 @@ function cut() {
         editor.value = newText;
         currentTab.isModified = true;
         updateLineNumbers(currentTab.id);
+        updateSyntaxHighlighting(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
@@ -580,6 +637,7 @@ function paste() {
             editor.selectionEnd = start + text.length;
             currentTab.isModified = true;
             updateLineNumbers(currentTab.id);
+            updateSyntaxHighlighting(currentTab.id);
             updateStatusBar();
         }
     });
@@ -602,6 +660,7 @@ function deleteText() {
         editor.selectionEnd = start;
         currentTab.isModified = true;
         updateLineNumbers(currentTab.id);
+        updateSyntaxHighlighting(currentTab.id);
         updateStatusBar();
     }
     hideAllMenus();
@@ -634,6 +693,12 @@ function toggleWordWrap() {
         editor.style.overflowX = wordWrapEnabled ? 'hidden' : 'auto';
     });
     
+    document.querySelectorAll('.editor-highlighted').forEach(highlighted => {
+        highlighted.style.whiteSpace = wordWrapEnabled ? 'pre-wrap' : 'pre';
+        highlighted.style.wordWrap = wordWrapEnabled ? 'break-word' : 'normal';
+        highlighted.style.overflowX = wordWrapEnabled ? 'hidden' : 'auto';
+    });
+    
     // Update line numbers for all tabs
     tabs.forEach(tab => {
         updateLineNumbers(tab.id);
@@ -650,9 +715,13 @@ function zoomIn() {
     document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
         lineNumbers.style.fontSize = (14 * zoomLevel) + 'px';
     });
+    document.querySelectorAll('.editor-highlighted').forEach(highlighted => {
+        highlighted.style.fontSize = (14 * zoomLevel) + 'px';
+    });
     
     tabs.forEach(tab => {
         updateLineNumbers(tab.id);
+        updateSyntaxHighlighting(tab.id);
     });
     
     hideAllMenus();
@@ -666,9 +735,13 @@ function zoomOut() {
     document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
         lineNumbers.style.fontSize = (14 * zoomLevel) + 'px';
     });
+    document.querySelectorAll('.editor-highlighted').forEach(highlighted => {
+        highlighted.style.fontSize = (14 * zoomLevel) + 'px';
+    });
     
     tabs.forEach(tab => {
         updateLineNumbers(tab.id);
+        updateSyntaxHighlighting(tab.id);
     });
     
     hideAllMenus();
@@ -682,9 +755,13 @@ function resetZoom() {
     document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
         lineNumbers.style.fontSize = '14px';
     });
+    document.querySelectorAll('.editor-highlighted').forEach(highlighted => {
+        highlighted.style.fontSize = '14px';
+    });
     
     tabs.forEach(tab => {
         updateLineNumbers(tab.id);
+        updateSyntaxHighlighting(tab.id);
     });
     
     hideAllMenus();
@@ -721,6 +798,11 @@ function setTheme(theme) {
         }
     });
     
+    // Re-apply syntax highlighting for all tabs with new theme
+    tabs.forEach(tab => {
+        updateSyntaxHighlighting(tab.id);
+    });
+    
     closeThemeSelector();
 }
 
@@ -739,12 +821,16 @@ function setLanguage(language) {
         'css': 'CSS',
         'python': 'Python',
         'java': 'Java',
-        'cpp': 'C++'
+        'cpp': 'C++',
+        'markdown': 'Markdown'
     };
     
     languageInfo.textContent = languageNames[language] || language;
     saveTabsToLocalStorage();
     hideAllMenus();
+    
+    // Update syntax highlighting for current tab
+    updateSyntaxHighlighting(currentTab.id);
 }
 
 // Format Operations
@@ -757,6 +843,13 @@ function setFont() {
         });
         document.querySelectorAll('.line-numbers').forEach(lineNumbers => {
             lineNumbers.style.fontFamily = font;
+        });
+        document.querySelectorAll('.editor-highlighted').forEach(highlighted => {
+            highlighted.style.fontFamily = font;
+        });
+        
+        tabs.forEach(tab => {
+            updateSyntaxHighlighting(tab.id);
         });
     }
     hideAllMenus();
@@ -970,6 +1063,7 @@ function replaceNext() {
         editor.selectionEnd = start + replaceWith.length;
         currentTab.isModified = true;
         updateLineNumbers(currentTab.id);
+        updateSyntaxHighlighting(currentTab.id);
         updateStatusBar();
     }
 }
@@ -1027,6 +1121,7 @@ function replaceAll() {
         editor.value = newText;
         currentTab.isModified = true;
         updateLineNumbers(currentTab.id);
+        updateSyntaxHighlighting(currentTab.id);
         updateStatusBar();
         alert(`Replaced ${count} occurrences of "${findText}"`);
     } else {
@@ -1046,6 +1141,45 @@ function showAbout() {
 
 function closeAboutDialog() {
     document.getElementById('about-dialog').style.display = 'none';
+}
+
+// Syntax Highlighting Functions
+function updateSyntaxHighlighting(tabId) {
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    
+    const editor = document.getElementById(`editor-${tabId}`);
+    const highlightedDiv = document.getElementById(`highlighted-${tabId}`);
+    
+    if (!editor || !highlightedDiv) return;
+    
+    const text = editor.value;
+    const language = tab.language || 'plain';
+    
+    if (language === 'plain') {
+        highlightedDiv.innerHTML = escapeHtml(text);
+    } else {
+        highlightedDiv.innerHTML = applySyntaxHighlighting(text, language);
+    }
+    
+    // Sync scroll position
+    highlightedDiv.scrollTop = editor.scrollTop;
+    highlightedDiv.scrollLeft = editor.scrollLeft;
+}
+
+function syncScroll(tabId) {
+    const editor = document.getElementById(`editor-${tabId}`);
+    const lineNumbers = document.getElementById(`line-numbers-${tabId}`);
+    const highlightedDiv = document.getElementById(`highlighted-${tabId}`);
+    
+    if (editor && lineNumbers) {
+        lineNumbers.scrollTop = editor.scrollTop;
+    }
+    
+    if (editor && highlightedDiv) {
+        highlightedDiv.scrollTop = editor.scrollTop;
+        highlightedDiv.scrollLeft = editor.scrollLeft;
+    }
 }
 
 // Utility Functions
@@ -1068,15 +1202,6 @@ function updateLineNumbers(tabId) {
     
     // Sync scroll position
     syncScroll(tabId);
-}
-
-function syncScroll(tabId) {
-    const editor = document.getElementById(`editor-${tabId}`);
-    const lineNumbers = document.getElementById(`line-numbers-${tabId}`);
-    
-    if (editor && lineNumbers) {
-        lineNumbers.scrollTop = editor.scrollTop;
-    }
 }
 
 function updateStatusBar() {
@@ -1119,7 +1244,8 @@ function updateStatusBar() {
         'css': 'CSS',
         'python': 'Python',
         'java': 'Java',
-        'cpp': 'C++'
+        'cpp': 'C++',
+        'markdown': 'Markdown'
     };
     languageInfo.textContent = languageNames[currentTab.language] || currentTab.language;
     
@@ -1173,6 +1299,7 @@ function handleInput(tabId) {
     tab.isModified = true;
     
     updateLineNumbers(tabId);
+    updateSyntaxHighlighting(tabId);
     updateStatusBar();
     
     // Save to localStorage
@@ -1278,6 +1405,7 @@ function handleKeyDown(event, tabId) {
         editor.selectionEnd = start + spaces.length;
         tab.isModified = true;
         updateLineNumbers(tabId);
+        updateSyntaxHighlighting(tabId);
         updateStatusBar();
     }
     
@@ -1297,6 +1425,7 @@ function handleKeyDown(event, tabId) {
             editor.selectionEnd = newStart + leadingSpaces.length;
             tab.isModified = true;
             updateLineNumbers(tabId);
+            updateSyntaxHighlighting(tabId);
             updateStatusBar();
         }, 0);
     }
@@ -1335,7 +1464,7 @@ function escapeHtml(text) {
     return text.replace(/&/g, '&amp;')
                .replace(/</g, '&lt;')
                .replace(/>/g, '&gt;')
-               .replace(/"/g, '&quot;')
+               .replace(/\"/g, '&quot;')
                .replace(/'/g, '&#39;');
 }
 

@@ -326,3 +326,82 @@ body {
         display: none;
     }
 }
+
+/* Markdown Syntax Highlighting */
+.markdown-header {
+    color: #569cd6;
+    font-weight: bold;
+}
+
+.markdown-header-text {
+    color: #d4d4d4;
+}
+
+.markdown-bold {
+    color: #d4d4d4;
+    font-weight: bold;
+}
+
+.markdown-italic {
+    color: #d4d4d4;
+    font-style: italic;
+}
+
+.markdown-bold-italic {
+    color: #d4d4d4;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.markdown-code {
+    color: #ce9178;
+    background-color: rgba(206, 145, 120, 0.1);
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+
+.markdown-code-block {
+    color: #ce9178;
+    background-color: rgba(206, 145, 120, 0.1);
+    display: block;
+    padding: 8px;
+    margin: 8px 0;
+    border-radius: 4px;
+}
+
+.markdown-link {
+    color: #9cdcfe;
+    text-decoration: underline;
+}
+
+.markdown-image {
+    color: #9cdcfe;
+}
+
+.markdown-list {
+    color: #b5cea8;
+}
+
+.markdown-blockquote {
+    color: #6a9955;
+}
+
+.markdown-hr {
+    color: #858585;
+}
+
+.markdown-table {
+    color: #9cdcfe;
+}
+
+/* Editor Highlighted Layer */
+.editor-highlighted {
+    background-color: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}

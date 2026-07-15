@@ -220,3 +220,124 @@ body {
     --current-line-bg: rgba(255, 255, 255, 0.05);
     --bracket-match-bg: rgba(100, 100, 255, 0.2);
 }
+
+/* Markdown Syntax Highlighting for Light Theme */
+.light-theme .markdown-header {
+    color: #0000ff;
+    font-weight: bold;
+}
+
+.light-theme .markdown-header-text {
+    color: #000000;
+}
+
+.light-theme .markdown-bold {
+    color: #000000;
+    font-weight: bold;
+}
+
+.light-theme .markdown-italic {
+    color: #000000;
+    font-style: italic;
+}
+
+.light-theme .markdown-bold-italic {
+    color: #000000;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.light-theme .markdown-code {
+    color: #a31515;
+    background-color: rgba(163, 21, 21, 0.1);
+}
+
+.light-theme .markdown-code-block {
+    color: #a31515;
+    background-color: rgba(163, 21, 21, 0.1);
+}
+
+.light-theme .markdown-link {
+    color: #0000ff;
+    text-decoration: underline;
+}
+
+.light-theme .markdown-image {
+    color: #0000ff;
+}
+
+.light-theme .markdown-list {
+    color: #098658;
+}
+
+.light-theme .markdown-blockquote {
+    color: #008000;
+}
+
+.light-theme .markdown-hr {
+    color: #888888;
+}
+
+.light-theme .markdown-table {
+    color: #0000ff;
+}
+
+/* Markdown Syntax Highlighting for Solarized Dark */
+.solarized-dark .markdown-header {
+    color: #b58900;
+    font-weight: bold;
+}
+
+.solarized-dark .markdown-header-text {
+    color: #839496;
+}
+
+.solarized-dark .markdown-code {
+    color: #cb4b16;
+    background-color: rgba(203, 75, 22, 0.1);
+}
+
+/* Markdown Syntax Highlighting for Solarized Light */
+.solarized-light .markdown-header {
+    color: #b58900;
+    font-weight: bold;
+}
+
+.solarized-light .markdown-header-text {
+    color: #657b83;
+}
+
+.solarized-light .markdown-code {
+    color: #cb4b16;
+    background-color: rgba(203, 75, 22, 0.1);
+}
+
+/* Markdown Syntax Highlighting for Monokai */
+.monokai .markdown-header {
+    color: #f92672;
+    font-weight: bold;
+}
+
+.monokai .markdown-header-text {
+    color: #f8f8f2;
+}
+
+.monokai .markdown-code {
+    color: #f92672;
+    background-color: rgba(249, 38, 114, 0.1);
+}
+
+/* Markdown Syntax Highlighting for Dracula */
+.dracula .markdown-header {
+    color: #ff79c6;
+    font-weight: bold;
+}
+
+.dracula .markdown-header-text {
+    color: #f8f8f2;
+}
+
+.dracula .markdown-code {
+    color: #ff79c6;
+    background-color: rgba(255, 121, 198, 0.1);
+}

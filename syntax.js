@@ -6,14 +6,16 @@ const languages = {
         keywords: ['break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 
                   'delete', 'do', 'else', 'export', 'extends', 'finally', 'for', 'function', 
                   'if', 'import', 'in', 'instanceof', 'new', 'return', 'super', 'switch', 
-                  'this', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield'],
+                  'this', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
+                  'let', 'static', 'await', 'async'],
         builtins: ['Array', 'Boolean', 'Date', 'Error', 'EvalError', 'Function', 'JSON', 
                   'Math', 'Number', 'Object', 'RangeError', 'ReferenceError', 'RegExp', 
-                  'String', 'SyntaxError', 'TypeError', 'URIError'],
+                  'String', 'SyntaxError', 'TypeError', 'URIError', 'Promise', 'Proxy',
+                  'Reflect', 'Set', 'Map', 'WeakSet', 'WeakMap', 'Symbol', 'BigInt'],
         literals: ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity'],
         operators: ['+', '-', '*', '/', '%', '=', '==', '===', '!=', '!==', '>', '<', '>=', '<=', 
                    '&&', '||', '!', '&', '|', '^', '~', '<<', '>>', '>>>', '+=', '-=', 
-                   '*=', '/=', '%=', '++', '--', '=>', '...'],
+                   '*=', '/=', '%=', '++', '--', '=>', '...', '**', '??', '?.', '??='],
         punctuation: ['(', ')', '[', ']', '{', '}', ',', ';', ':', '.', '?', '...']
     },
     html: {
@@ -70,46 +72,35 @@ const languages = {
                   'column-count', 'column-fill', 'column-gap', 'column-rule', 
                   'column-rule-color', 'column-rule-style', 'column-rule-width', 
                   'column-span', 'column-width', 'columns', 'content', 'counter-increment', 
-                  'counter-reset', 'cue', 'cue-after', 'cue-before', 'cursor', 'direction', 
-                  'display', 'elevation', 'empty-cells', 'fit', 'fit-position', 'float', 
-                  'flow-from', 'flow-into', 'font', 'font-family', 'font-feature-settings', 
-                  'font-kerning', 'font-language-override', 'font-size', 'font-size-adjust', 
-                  'font-stretch', 'font-style', 'font-variant', 'font-variant-alternates', 
-                  'font-variant-caps', 'font-variant-east-asian', 'font-variant-ligatures', 
-                  'font-variant-numeric', 'font-variant-position', 'font-weight', 'hanging-punctuation', 
-                  'height', 'hyphens', 'icon', 'image-orientation', 'image-rendering', 
-                  'image-resolution', 'ime-mode', 'justify-content', 'left', 'letter-spacing', 
-                  'line-break', 'line-height', 'list-style', 'list-style-image', 
-                  'list-style-position', 'list-style-type', 'margin', 'margin-bottom', 
-                  'margin-left', 'margin-right', 'margin-top', 'marks', 'max-height', 
-                  'max-width', 'min-height', 'min-width', 'nav-down', 'nav-index', 'nav-left', 
-                  'nav-right', 'nav-up', 'object-fit', 'object-position', 'opacity', 'order', 
-                  'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 
-                  'outline-width', 'overflow', 'overflow-style', 'overflow-x', 'overflow-y', 
-                  'padding', 'padding-bottom', 'padding-left', 'padding-right', 'padding-top', 
-                  'page', 'page-break-after', 'page-break-before', 'page-break-inside', 
-                  'pause', 'pause-after', 'pause-before', 'perspective', 'perspective-origin', 
-                  'pitch', 'pitch-range', 'play-during', 'position', 'punctuation-trim', 
-                  'quotes', 'region-break-after', 'region-break-before', 'region-break-inside', 
-                  'region-fragment', 'resize', 'rest', 'rest-after', 'rest-before', 'richness', 
-                  'right', 'rotation', 'rotation-point', 'ruby-position', 'speak', 
-                  'speak-as', 'speak-header', 'speak-numeral', 'speak-punctuation', 'speech-rate', 
-                  'stress', 'table-layout', 'tab-size', 'target', 'target-name', 'target-new', 
-                  'target-position', 'text-align', 'text-align-last', 'text-decoration', 
-                  'text-decoration-color', 'text-decoration-line', 'text-decoration-style', 
-                  'text-height', 'text-indent', 'text-justify', 'text-kashida-space', 
-                  'text-line-through', 'text-line-through-color', 'text-line-through-mode', 
-                  'text-line-through-style', 'text-line-through-width', 'text-overflow', 
-                  'text-overflow-ellipsis', 'text-overflow-mode', 'text-rendering', 
-                  'text-shadow', 'text-transform', 'text-underline', 'text-underline-color', 
-                  'text-underline-mode', 'text-underline-style', 'text-underline-width', 
-                  'text-wrap', 'top', 'transform', 'transform-origin', 'transform-style', 
-                  'transition', 'transition-delay', 'transition-duration', 'transition-property', 
-                  'transition-timing-function', 'unicode-bidi', 'unicode-range', 'vertical-align', 
-                  'visibility', 'voice-balance', 'voice-duration', 'voice-family', 
-                  'voice-pitch', 'voice-range', 'voice-rate', 'voice-stress', 'voice-volume', 
-                  'white-space', 'widows', 'width', 'word-break', 'word-spacing', 
-                  'word-wrap', 'z-index'],
+                  'counter-reset', 'cursor', 'direction', 'display', 'elevation', 'empty-cells', 
+                  'fit', 'fit-position', 'float', 'flow-from', 'flow-into', 'font', 
+                  'font-family', 'font-feature-settings', 'font-kerning', 'font-language-override', 
+                  'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 
+                  'font-variant-alternates', 'font-variant-caps', 'font-variant-east-asian', 
+                  'font-variant-ligatures', 'font-variant-numeric', 'font-variant-position', 
+                  'font-weight', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow',
+                  'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-gap',
+                  'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-gap',
+                  'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns',
+                  'grid-template-rows', 'hanging-punctuation', 'height', 'hyphens', 'icon', 
+                  'image-orientation', 'image-rendering', 'image-resolution', 'ime-mode', 
+                  'justify-content', 'left', 'letter-spacing', 'line-break', 'line-height', 
+                  'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 
+                  'margin', 'margin-bottom', 'margin-left', 'margin-right', 'margin-top', 
+                  'max-height', 'max-width', 'min-height', 'min-width', 'object-fit', 
+                  'object-position', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 
+                  'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-style', 
+                  'overflow-x', 'overflow-y', 'padding', 'padding-bottom', 'padding-left', 
+                  'padding-right', 'padding-top', 'position', 'quotes', 'resize', 'right', 
+                  'scroll-behavior', 'tab-size', 'table-layout', 'text-align', 'text-align-last', 
+                  'text-decoration', 'text-decoration-color', 'text-decoration-line', 
+                  'text-decoration-style', 'text-indent', 'text-justify', 'text-overflow', 
+                  'text-rendering', 'text-shadow', 'text-transform', 'text-underline-position',
+                  'top', 'transform', 'transform-origin', 'transform-style', 'transition', 
+                  'transition-delay', 'transition-duration', 'transition-property', 
+                  'transition-timing-function', 'unicode-bidi', 'vertical-align', 'visibility', 
+                  'white-space', 'widows', 'width', 'word-break', 'word-spacing', 'word-wrap', 
+                  'z-index'],
         pseudoClasses: [':active', ':checked', ':default', ':dir', ':disabled', ':empty', 
                        ':enabled', ':first', ':first-child', ':first-of-type', ':focus', 
                        ':fullscreen', ':hover', ':indeterminate', ':in-range', ':invalid', 
@@ -118,10 +109,15 @@ const languages = {
                        ':nth-of-type', ':only-child', ':only-of-type', ':optional', 
                        ':out-of-range', ':read-only', ':read-write', ':required', ':right', 
                        ':root', ':scope', ':target', ':valid', ':visited'],
-        pseudoElements: ['::after', '::before', '::first-letter', '::first-line', '::selection'],
-        functions: ['attr', 'calc', 'cubic-bezier', 'hsl', 'hsla', 'rgb', 'rgba', 'url'],
+        pseudoElements: ['::after', '::before', '::first-letter', '::first-line', '::selection',
+                        '::backdrop', '::cue', '::cue-region', '::part', '::placeholder', '::spelling-error', '::grammar-error'],
+        functions: ['attr', 'calc', 'cubic-bezier', 'hsl', 'hsla', 'rgb', 'rgba', 'url', 'var',
+                   'env', 'min', 'max', 'clamp', 'element', 'cross-fade', 'image', 'image-set',
+                   'linear-gradient', 'radial-gradient', 'conic-gradient', 'repeating-linear-gradient',
+                   'repeating-radial-gradient'],
         units: ['cm', 'deg', 'em', 'ex', 'fr', 'grad', 'Hz', 'in', 'khz', 'mm', 'ms', 
-               'number', 'pc', 'pt', 'px', 'rad', 'rem', 's', 'turn', 'vh', 'vm', 'vmax', 'vmin', 'vw']
+               'number', 'pc', 'pt', 'px', 'rad', 'rem', 's', 'turn', 'vh', 'vm', 'vmax', 'vmin', 'vw',
+               'ch', 'ex', 'lh', 'rlh', 'cap', 'ic', 'lc', 'rc']
     },
     python: {
         keywords: ['and', 'as', 'assert', 'break', 'class', 'continue', 'def', 'del', 'elif', 
@@ -140,7 +136,7 @@ const languages = {
         operators: ['+', '-', '*', '/', '%', '**', '//', '=', '==', '!=', '>', '<', '>=', '<=', 
                    'and', 'or', 'not', 'is', 'in', 'is not', 'not in', '&', '|', '^', '~', 
                    '<<', '>>', '+=', '-=', '*=', '/=', '%=', '**=', '//=', '&=', '|=', 
-                   '^=', '>>=', '<<=', '->'],
+                   '^=', '>>=', '<<=', '->', ':='],
         punctuation: ['(', ')', '[', ']', '{', '}', ',', ';', ':', '.', '@', '...']
     },
     java: {
@@ -173,24 +169,38 @@ const languages = {
         literals: ['true', 'false', 'nullptr'],
         operators: ['+', '-', '*', '/', '%', '=', '==', '!=', '>', '<', '>=', '<=', '&&', '||', 
                    '!', '&', '|', '^', '~', '<<', '>>', '+=', '-=', '*=', '/=', '%=', '++', 
-                   '--', '->', '->*', '.', '.*', '::', '?:'],
+                   '--', '->', '->*', '.', '.*', '::', '?:', 'new', 'delete'],
         punctuation: ['(', ')', '[', ']', '{', '}', ',', ';', ':', '...']
+    },
+    markdown: {
+        headers: ['#', '##', '###', '####', '#####', '######'],
+        emphasis: ['*', '_', '**', '__', '***', '___'],
+        lists: ['-', '*', '+', '1.'],
+        links: ['[', '](url)', '!['],
+        code: ['`', '```'],
+        blockquotes: ['>'],
+        horizontal: ['---', '***', '___'],
+        tables: ['|', '-'],
+        escape: ['\\']
     }
 };
 
 // Syntax highlighting function
 function applySyntaxHighlighting(text, language) {
     if (!language || !languages[language]) {
-        return text;
+        return escapeHtml(text);
     }
     
     const lang = languages[language];
     let highlighted = text;
     
-    // Escape HTML special characters
-    highlighted = highlighted.replace(/&/g, '&amp;')
-                             .replace(/</g, '&lt;')
-                             .replace(/>/g, '&gt;');
+    // For Markdown, use special highlighting
+    if (language === 'markdown') {
+        return highlightMarkdown(highlighted);
+    }
+    
+    // Escape HTML special characters first
+    highlighted = escapeHtml(highlighted);
     
     // Highlight comments (single-line and multi-line)
     highlighted = highlightComments(highlighted, lang);
@@ -281,6 +291,12 @@ function highlightNumbers(text) {
     // Hex numbers
     result = result.replace(/\b(0[xX][0-9a-fA-F]+)\b/g, '<span class="number">$1</span>');
     
+    // Binary numbers
+    result = result.replace(/\b(0[bB][01]+)\b/g, '<span class="number">$1</span>');
+    
+    // Octal numbers
+    result = result.replace(/\b(0[oO][0-7]+)\b/g, '<span class="number">$1</span>');
+    
     return result;
 }
 
@@ -315,8 +331,10 @@ function highlightOperators(text, operators) {
 function highlightHtmlTags(text, lang) {
     let result = text;
     
-    // Highlight HTML tags
-    result = result.replace(/&lt;\/?([a-zA-Z][a-zA-Z0-9-]*)/g, '&lt;/<span class="tag">$1</span>');
+    // Highlight HTML tags - opening tags
+    result = result.replace(/&lt;([a-zA-Z][a-zA-Z0-9-]*)/g, '&lt;<span class="tag">$1</span>');
+    
+    // Highlight HTML tags - closing tags
     result = result.replace(/&lt;\/([a-zA-Z][a-zA-Z0-9-]*)/g, '&lt;/<span class="tag">$1</span>');
     
     // Highlight HTML attributes
@@ -364,6 +382,53 @@ function highlightCss(text, lang) {
     return result;
 }
 
+function highlightMarkdown(text) {
+    // Escape HTML first
+    let result = escapeHtml(text);
+    
+    // Headers
+    result = result.replace(/^(#{1,6})\s*(.*?)\s*$/gm, function(match, hashes, content) {
+        return '<span class="markdown-header">' + hashes + '</span><span class="markdown-header-text">' + content + '</span>';
+    });
+    
+    // Bold and Italic
+    result = result.replace(/\*\*\*(.*?)\*\*\*/g, '<span class="markdown-bold-italic">$1</span>');
+    result = result.replace(/___.*?___/g, '<span class="markdown-bold-italic">$&</span>');
+    result = result.replace(/\*\*(.*?)\*\*/g, '<span class="markdown-bold">$1</span>');
+    result = result.replace(/__(.*?)__/g, '<span class="markdown-bold">$1</span>');
+    result = result.replace(/\*(.*?)\*/g, '<span class="markdown-italic">$1</span>');
+    result = result.replace(/_(.*?)_/g, '<span class="markdown-italic">$1</span>');
+    
+    // Code blocks (inline)
+    result = result.replace(/`([^`]+)`/g, '<span class="markdown-code">$1</span>');
+    
+    // Code blocks (multiline)
+    result = result.replace(/```([\s\S]*?)```/g, '<span class="markdown-code-block">$1</span>');
+    
+    // Links
+    result = result.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<span class="markdown-link">[$1]($2)</span>');
+    
+    // Images
+    result = result.replace(/!\[([^\]]+)\]\(([^\)]+)\)/g, '<span class="markdown-image">![$1]($2)</span>');
+    
+    // Lists
+    result = result.replace(/^(\s*)([\*\+\-])\s+/gm, '$1<span class="markdown-list">$2 </span>');
+    result = result.replace(/^(\s*)(\d+\.)\s+/gm, '$1<span class="markdown-list">$2 </span>');
+    
+    // Blockquotes
+    result = result.replace(/^(\s*)>/gm, '$1<span class="markdown-blockquote">></span>');
+    
+    // Horizontal rules
+    result = result.replace(/^(\s*)---(\s*)$/gm, '$1<span class="markdown-hr">---</span>$2');
+    result = result.replace(/^(\s*)\*\*\*(\s*)$/gm, '$1<span class="markdown-hr">***</span>$2');
+    result = result.replace(/^(\s*)___(\s*)$/gm, '$1<span class="markdown-hr">___</span>$2');
+    
+    // Tables
+    result = result.replace(/\|/g, '<span class="markdown-table">|</span>');
+    
+    return result;
+}
+
 // Utility functions
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -402,35 +467,26 @@ function detectLanguage(filename) {
         'h': 'cpp',
         'hpp': 'cpp',
         'hxx': 'cpp',
-        'php': 'php',
-        'rb': 'ruby',
-        'go': 'go',
-        'rs': 'rust',
-        'swift': 'swift',
-        'kt': 'kotlin',
-        'kts': 'kotlin',
-        'scala': 'scala',
-        'ts': 'typescript',
-        'tsx': 'typescript',
-        'jsx': 'javascript',
-        'vue': 'html',
-        'svelte': 'html'
+        'md': 'markdown',
+        'markdown': 'markdown',
+        'txt': 'plain',
+        'text': 'plain'
     };
     
     return extensionMap[extension] || null;
 }
 
-// Auto-detect and apply syntax highlighting
-function updateSyntaxHighlighting() {
-    const language = detectLanguage(currentFile);
-    const text = editor.value;
-    
-    if (language && text) {
-        const highlighted = applySyntaxHighlighting(text, language);
-        // In a real implementation, we'd display this in a separate div
-        // For now, we'll just store it for potential use
-        return highlighted;
-    }
-    
-    return text;
+// Get language display name
+function getLanguageDisplayName(language) {
+    const languageNames = {
+        'plain': 'Plain Text',
+        'javascript': 'JavaScript',
+        'html': 'HTML',
+        'css': 'CSS',
+        'python': 'Python',
+        'java': 'Java',
+        'cpp': 'C++',
+        'markdown': 'Markdown'
+    };
+    return languageNames[language] || language;
 }
