@@ -171,7 +171,8 @@ The status bar displays:
 
 ## License
 
-MIT License - Feel free to use, modify, and distribute.
+* GNU General Public License version 3
+  * Updated: 7/15/2026   
 
 ## Credits
 
