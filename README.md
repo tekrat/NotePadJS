@@ -11,7 +11,7 @@ A comprehensive text editor clone inspired by NotePad++, built entirely with HTM
 - **Find & Replace**: Advanced search with regex support, case sensitivity, whole word matching
 - **View Options**: Toggle status bar, word wrap, zoom in/out, reset zoom
 - **Multiple Themes**: Default (Dark), Light, Solarized Dark, Solarized Light, Monokai, Dracula
-- **Syntax Highlighting**: Support for JavaScript, HTML, CSS, Python, Java, C++
+- **Syntax Highlighting**: Support for JavaScript, HTML, CSS, Python, Java, C++, Markdown
 
 ### User Interface
 - **Menu Bar**: Traditional menu system with dropdown menus
@@ -96,6 +96,7 @@ The editor supports syntax highlighting for multiple programming languages:
 - JavaScript
 - HTML
 - CSS
+- Markdown
 - Python
 - Java
 - C++
